@@ -1,0 +1,644 @@
+{
+  "version": "2.0.0",
+  "updated_at": "2026-07-08T09:00:00Z",
+  "sync": {
+    "min_app_version": "3.0.0",
+    "force_app_update": false,
+    "apply_policy": "next_launch"
+  },
+  "patterns": {
+    "phone_e164": {
+      "regex": "^\\+[1-9]\\d{7,14}$"
+    },
+    "phone_digits": {
+      "regex": "^[0-9]{9,15}$",
+      "extra": [
+        "not_prefix_00",
+        "not_all_zeros"
+      ]
+    },
+    "email_standard": {
+      "regex": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"
+    },
+    "ssn_14": {
+      "regex": "^[0-9]{14}$"
+    },
+    "name_letters": {
+      "regex": "^[\\u0600-\\u06FFa-zA-Z\\s]{2,50}$"
+    },
+    "doc_14_digits": {
+      "regex": "^[0-9]{14}$"
+    }
+  },
+  "messages": {
+    "required": {
+      "en": "This field is required",
+      "ar": "هذا الحقل مطلوب",
+      "it": "Questo campo è obbligatorio"
+    },
+    "regex": {
+      "en": "Invalid format",
+      "ar": "صيغة غير صحيحة",
+      "it": "Formato non valido"
+    },
+    "minLength": {
+      "en": "Value is too short",
+      "ar": "القيمة قصيرة جداً",
+      "it": "Valore troppo corto"
+    },
+    "maxLength": {
+      "en": "Value is too long",
+      "ar": "القيمة طويلة جداً",
+      "it": "Valore troppo lungo"
+    },
+    "phone_invalid": {
+      "en": "Please enter a valid phone number",
+      "ar": "يرجى إدخال رقم هاتف صحيح",
+      "it": "Inserisci un numero di telefono valido"
+    },
+    "email_invalid": {
+      "en": "Please enter a valid email address",
+      "ar": "يرجى إدخال بريد إلكتروني صحيح",
+      "it": "Inserisci un indirizzo email valido"
+    },
+    "ssn_invalid": {
+      "en": "National ID must be 14 digits",
+      "ar": "يجب أن يكون الرقم القومي 14 رقمًا",
+      "it": "Il codice fiscale deve avere 14 cifre"
+    },
+    "name_invalid": {
+      "en": "Name must be 2–50 letters",
+      "ar": "يجب أن يكون الاسم من 2 إلى 50 حرفًا",
+      "it": "Il nome deve contenere 2–50 lettere"
+    },
+    "name_letters_only": {
+      "en": "Name must contain letters only",
+      "ar": "يجب أن يحتوي الاسم على أحرف فقط",
+      "it": "Il nome deve contenere solo lettere"
+    },
+    "name_required_third": {
+      "en": "Third name is required",
+      "ar": "الاسم الثالث مطلوب",
+      "it": "Il terzo nome è obbligatorio"
+    },
+    "name_required_last": {
+      "en": "Last name is required",
+      "ar": "اسم العائلة مطلوب",
+      "it": "Il cognome è obbligatorio"
+    },
+    "iqama_invalid": {
+      "en": "Iqama number must be 14 digits",
+      "ar": "يجب أن يكون رقم الإقامة 14 رقمًا",
+      "it": "Il numero Iqama deve avere 14 cifre"
+    },
+    "visa_invalid": {
+      "en": "Visa number must be 14 digits",
+      "ar": "يجب أن يكون رقم التأشيرة 14 رقمًا",
+      "it": "Il numero del visto deve avere 14 cifre"
+    },
+    "identifier_14_digits": {
+      "en": "Must be 14 digits",
+      "ar": "يجب أن يكون 14 رقمًا",
+      "it": "Devono essere 14 cifre"
+    },
+    "residence_required": {
+      "en": "Residence ID is required",
+      "ar": "رقم الإقامة مطلوب",
+      "it": "Il documento di residenza è obbligatorio"
+    },
+    "password_required": {
+      "en": "Password is required",
+      "ar": "كلمة المرور مطلوبة",
+      "it": "La password è obbligatoria"
+    },
+    "password_too_short": {
+      "en": "Password must be at least {{min}} characters",
+      "ar": "يجب أن تكون كلمة المرور {{min}} حرفًا على الأقل",
+      "it": "La password deve contenere almeno {{min}} caratteri"
+    },
+    "password_mixed_case": {
+      "en": "Password must include upper and lower case letters",
+      "ar": "يجب أن تحتوي كلمة المرور على أحرف كبيرة وصغيرة",
+      "it": "La password deve includere lettere maiuscole e minuscole"
+    },
+    "password_needs_number": {
+      "en": "Password must include a number",
+      "ar": "يجب أن تحتوي كلمة المرور على رقم",
+      "it": "La password deve includere un numero"
+    },
+    "password_needs_symbol": {
+      "en": "Password must include a symbol",
+      "ar": "يجب أن تحتوي كلمة المرور على رمز",
+      "it": "La password deve includere un simbolo"
+    },
+    "password_mismatch": {
+      "en": "Passwords do not match",
+      "ar": "كلمتا المرور غير متطابقتين",
+      "it": "Le password non corrispondono"
+    },
+    "birth_date_invalid": {
+      "en": "Birth date must be in the past",
+      "ar": "يجب أن يكون تاريخ الميلاد في الماضي",
+      "it": "La data di nascita deve essere nel passato"
+    },
+    "expire_date_invalid": {
+      "en": "Expiry date must be in the future",
+      "ar": "يجب أن يكون تاريخ الانتهاء في المستقبل",
+      "it": "La data di scadenza deve essere nel futuro"
+    },
+    "gender_required": {
+      "en": "Please select a gender",
+      "ar": "يرجى اختيار الجنس",
+      "it": "Seleziona un genere"
+    },
+    "mother_name_invalid": {
+      "en": "Mother name must be 2–50 letters",
+      "ar": "يجب أن يكون اسم الأم من 2 إلى 50 حرفًا",
+      "it": "Il nome della madre deve contenere 2–50 lettere"
+    }
+  },
+  "screens": [
+    {
+      "screen": "basic_data",
+      "version": 1,
+      "fields": [
+        {
+          "id": "phone",
+          "type": "phone",
+          "validation": {
+            "required": true,
+            "pattern": "phone_digits",
+            "max_length": 15,
+            "error_messages": {
+              "required": "phone_invalid",
+              "regex": "phone_invalid"
+            }
+          }
+        },
+        {
+          "id": "email",
+          "type": "email",
+          "validation": {
+            "required": true,
+            "pattern": "email_standard",
+            "error_messages": {
+              "required": "email_invalid",
+              "regex": "email_invalid"
+            }
+          }
+        },
+        {
+          "id": "ssn",
+          "type": "number",
+          "validation": {
+            "required": true,
+            "pattern": "ssn_14",
+            "max_length": 14,
+            "error_messages": {
+              "required": "ssn_invalid",
+              "regex": "ssn_invalid"
+            },
+            "tenant_overrides": {
+              "tenant_042": {
+                "required": false
+              }
+            }
+          }
+        },
+        {
+          "id": "residence_id",
+          "type": "text",
+          "validation": {
+            "required": true,
+            "error_messages": {
+              "required": "residence_required"
+            }
+          }
+        },
+        {
+          "id": "password",
+          "type": "password",
+          "validation": {
+            "required": true,
+            "min_length": 12,
+            "custom_rules": [
+              "mixed_case",
+              "numbers",
+              "symbols"
+            ],
+            "error_messages": {
+              "required": "password_required",
+              "min_length": "password_too_short",
+              "mixed_case": "password_mixed_case",
+              "numbers": "password_needs_number",
+              "symbols": "password_needs_symbol"
+            }
+          }
+        },
+        {
+          "id": "confirm_password",
+          "type": "password",
+          "validation": {
+            "required": true,
+            "custom_rules": [
+              "confirmed"
+            ],
+            "confirmed_field": "password",
+            "error_messages": {
+              "required": "password_required",
+              "confirmed": "password_mismatch"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "screen": "complete_profile",
+      "version": 1,
+      "fields": [
+        {
+          "id": "first_name",
+          "type": "text",
+          "validation": {
+            "required": true,
+            "pattern": "name_letters",
+            "max_length": 50,
+            "error_messages": {
+              "required": "name_invalid",
+              "regex": "name_invalid"
+            }
+          }
+        },
+        {
+          "id": "second_name",
+          "type": "text",
+          "validation": {
+            "required": false,
+            "pattern": "name_letters",
+            "max_length": 50,
+            "error_messages": {
+              "regex": "name_letters_only"
+            },
+            "tenant_overrides": {
+              "tenant_117": {
+                "required": true
+              }
+            }
+          }
+        },
+        {
+          "id": "third_name",
+          "type": "text",
+          "validation": {
+            "required": true,
+            "pattern": "name_letters",
+            "max_length": 50,
+            "error_messages": {
+              "required": "name_required_third",
+              "regex": "name_letters_only"
+            }
+          }
+        },
+        {
+          "id": "last_name",
+          "type": "text",
+          "validation": {
+            "required": true,
+            "pattern": "name_letters",
+            "max_length": 50,
+            "error_messages": {
+              "required": "name_required_last",
+              "regex": "name_letters_only"
+            }
+          }
+        },
+        {
+          "id": "iqama_number",
+          "type": "number",
+          "validation": {
+            "required": true,
+            "pattern": "ssn_14",
+            "max_length": 14,
+            "error_messages": {
+              "required": "iqama_invalid",
+              "regex": "iqama_invalid"
+            }
+          }
+        },
+        {
+          "id": "visa_number",
+          "type": "number",
+          "validation": {
+            "required": true,
+            "pattern": "ssn_14",
+            "max_length": 14,
+            "error_messages": {
+              "required": "visa_invalid",
+              "regex": "visa_invalid"
+            }
+          }
+        },
+        {
+          "id": "birth_date",
+          "type": "date",
+          "validation": {
+            "required": true,
+            "date_constraint": "past",
+            "error_messages": {
+              "required": "birth_date_invalid",
+              "date_past": "birth_date_invalid"
+            }
+          }
+        },
+        {
+          "id": "expire_date",
+          "type": "date",
+          "validation": {
+            "required": true,
+            "date_constraint": "future",
+            "error_messages": {
+              "required": "expire_date_invalid",
+              "date_future": "expire_date_invalid"
+            }
+          }
+        },
+        {
+          "id": "gender",
+          "type": "selection",
+          "validation": {
+            "required": true,
+            "error_messages": {
+              "required": "gender_required"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "screen": "forget_password",
+      "version": 1,
+      "fields": [
+        {
+          "id": "identifier",
+          "type": "text",
+          "validation": {
+            "required": true,
+            "pattern": "ssn_14",
+            "max_length": 14,
+            "error_messages": {
+              "required": "identifier_14_digits",
+              "regex": "identifier_14_digits"
+            }
+          }
+        },
+        {
+          "id": "identifier_residence",
+          "type": "text",
+          "validation": {
+            "required": true,
+            "error_messages": {
+              "required": "residence_required"
+            }
+          }
+        },
+        {
+          "id": "email",
+          "type": "email",
+          "validation": {
+            "required": true,
+            "pattern": "email_standard",
+            "error_messages": {
+              "required": "email_invalid",
+              "regex": "email_invalid"
+            }
+          }
+        },
+        {
+          "id": "mother_name",
+          "type": "text",
+          "validation": {
+            "required": true,
+            "pattern": "name_letters",
+            "max_length": 50,
+            "error_messages": {
+              "required": "mother_name_invalid",
+              "regex": "mother_name_invalid"
+            }
+          }
+        },
+        {
+          "id": "new_password",
+          "type": "password",
+          "validation": {
+            "required": true,
+            "min_length": 12,
+            "custom_rules": [
+              "mixed_case",
+              "numbers",
+              "symbols"
+            ],
+            "error_messages": {
+              "required": "password_required",
+              "min_length": "password_too_short",
+              "mixed_case": "password_mixed_case",
+              "numbers": "password_needs_number",
+              "symbols": "password_needs_symbol"
+            }
+          }
+        },
+        {
+          "id": "confirm_password",
+          "type": "password",
+          "validation": {
+            "required": true,
+            "custom_rules": [
+              "confirmed"
+            ],
+            "confirmed_field": "new_password",
+            "error_messages": {
+              "required": "password_required",
+              "confirmed": "password_mismatch"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "screen": "login",
+      "form": "egyptian_form",
+      "version": 1,
+      "fields": [
+        {
+          "id": "national_id",
+          "type": "number",
+          "validation": {
+            "required": true,
+            "pattern": "ssn_14",
+            "min_length": 14,
+            "max_length": 14,
+            "error_messages": {
+              "required": "ssn_invalid",
+              "regex": "ssn_invalid"
+            }
+          }
+        },
+        {
+          "id": "password",
+          "type": "password",
+          "validation": {
+            "required": true,
+            "min_length": 6,
+            "custom_rules": [
+              "mixed_case",
+              "numbers",
+              "symbols"
+            ],
+            "error_messages": {
+              "required": "password_required",
+              "min_length": "password_too_short",
+              "mixed_case": "password_mixed_case",
+              "numbers": "password_needs_number",
+              "symbols": "password_needs_symbol"
+            },
+            "tenant_overrides": {
+              "tenant_117": {
+                "min_length": 8
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "screen": "login",
+      "form": "non_egyptian_form",
+      "version": 1,
+      "fields": [
+        {
+          "id": "residence",
+          "type": "text",
+          "validation": {
+            "required": true,
+            "error_messages": {
+              "required": "residence_required"
+            }
+          }
+        },
+        {
+          "id": "password",
+          "type": "password",
+          "validation": {
+            "required": true,
+            "min_length": 6,
+            "custom_rules": [
+              "mixed_case",
+              "numbers",
+              "symbols"
+            ],
+            "error_messages": {
+              "required": "password_required",
+              "min_length": "password_too_short",
+              "mixed_case": "password_mixed_case",
+              "numbers": "password_needs_number",
+              "symbols": "password_needs_symbol"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "screen": "add_child",
+      "version": 1,
+      "fields": [
+        {
+          "id": "first_name",
+          "type": "text",
+          "validation": {
+            "required": true,
+            "pattern": "name_letters",
+            "max_length": 50,
+            "error_messages": {
+              "required": "name_invalid",
+              "regex": "name_invalid"
+            }
+          }
+        },
+        {
+          "id": "national_id",
+          "type": "number",
+          "validation": {
+            "required": true,
+            "pattern": "ssn_14",
+            "max_length": 14,
+            "error_messages": {
+              "required": "identifier_14_digits",
+              "regex": "identifier_14_digits"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "screen": "update_child",
+      "version": 1,
+      "fields": [
+        {
+          "id": "first_name",
+          "type": "text",
+          "validation": {
+            "required": true,
+            "pattern": "name_letters",
+            "max_length": 50,
+            "error_messages": {
+              "required": "name_invalid",
+              "regex": "name_invalid"
+            }
+          }
+        },
+        {
+          "id": "national_id",
+          "type": "number",
+          "validation": {
+            "required": true,
+            "pattern": "ssn_14",
+            "max_length": 14,
+            "error_messages": {
+              "required": "identifier_14_digits",
+              "regex": "identifier_14_digits"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "screen": "update_profile",
+      "version": 1,
+      "fields": [
+        {
+          "id": "phone",
+          "type": "phone",
+          "validation": {
+            "required": true,
+            "pattern": "phone_digits",
+            "max_length": 15,
+            "error_messages": {
+              "required": "phone_invalid",
+              "regex": "phone_invalid"
+            }
+          }
+        },
+        {
+          "id": "email",
+          "type": "email",
+          "validation": {
+            "required": false,
+            "pattern": "email_standard",
+            "error_messages": {
+              "regex": "email_invalid"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

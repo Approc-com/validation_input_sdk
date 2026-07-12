@@ -1,0 +1,101 @@
+import 'engine/validation_engine.dart';
+import 'models/validation_models.dart';
+import 'repository/validation_config_repository.dart';
+
+/// Drop-in validation SDK for any Flutter app.
+class ValidationSdk {
+  ValidationSdk({
+    required String assetPath,
+    String? remoteUrl,
+    String subdirectory = 'validation',
+  }) : repository = ValidationConfigRepository(
+          assetPath: assetPath,
+          remoteUrl: remoteUrl,
+          subdirectory: subdirectory,
+        ),
+        engine = ValidationEngine();
+
+  final ValidationConfigRepository repository;
+  final ValidationEngine engine;
+
+  ValidationConfig get config => repository.active;
+
+  /// Call on app start (non-blocking after init).
+  Future<void> initialize() => repository.init();
+
+  /// Background sync — pass your app semver string e.g. "3.0.0".
+  Future<SyncOutcome> sync({required String appVersion}) =>
+      repository.sync(appVersion: appVersion);
+
+  FieldRules? rules({
+    required String screen,
+    String? form,
+    required String fieldId,
+    String? tenantId,
+  }) =>
+      engine.rules(
+        config: config,
+        screen: screen,
+        form: form,
+        fieldId: fieldId,
+        tenantId: tenantId,
+      );
+
+  ValidationResult validate({
+    required String screen,
+    String? form,
+    required String fieldId,
+    required dynamic value,
+    required Map<String, dynamic> allValues,
+    String? tenantId,
+    String locale = 'en',
+  }) =>
+      engine.validate(
+        config: config,
+        screen: screen,
+        form: form,
+        fieldId: fieldId,
+        value: value,
+        allValues: allValues,
+        tenantId: tenantId,
+        locale: locale,
+      );
+
+  /// Validate every field on a screen; returns fieldId → error message.
+  Map<String, String> validateScreen({
+    required String screen,
+    String? form,
+    required Map<String, dynamic> values,
+    String? tenantId,
+    String locale = 'en',
+  }) {
+    final screenDef = config.screens.cast<ScreenDef?>().firstWhere(
+          (s) =>
+              s!.screen == screen &&
+              (form == null ? s.form == null : s.form == form),
+          orElse: () => null,
+        );
+    if (screenDef == null) return {};
+
+    final errors = <String, String>{};
+    for (final field in screenDef.fields) {
+      final result = validate(
+        screen: screen,
+        form: form,
+        fieldId: field.id,
+        value: values[field.id],
+        allValues: values,
+        tenantId: tenantId,
+        locale: locale,
+      );
+      if (!result.isValid && result.message != null) {
+        errors[field.id] = result.message!;
+      }
+    }
+    return errors;
+  }
+
+  void listen(void Function(ValidationConfig config) listener) {
+    repository.onConfigUpdated = listener;
+  }
+}
