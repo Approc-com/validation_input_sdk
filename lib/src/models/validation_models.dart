@@ -75,24 +75,26 @@ class ValidationConfig {
 
 class SyncConfig {
   const SyncConfig({
-    required this.minAppVersion,
-    required this.forceAppUpdate,
+    required this.minValidationFileVersionAllowed,
+    required this.forceValidationFileUpdate,
     required this.applyPolicy,
   });
 
-  final String minAppVersion;
-  final bool forceAppUpdate;
+  final String minValidationFileVersionAllowed;
+  final bool forceValidationFileUpdate;
   final String applyPolicy;
 
   factory SyncConfig.fromJson(Map<String, dynamic> json) => SyncConfig(
-        minAppVersion: json['min_app_version'] as String,
-        forceAppUpdate: json['force_app_update'] as bool,
+        minValidationFileVersionAllowed:
+            json['min_validation_file_version_allowed'] as String,
+        forceValidationFileUpdate:
+            json['force_validation_file_update'] as bool,
         applyPolicy: json['apply_policy'] as String,
       );
 
   Map<String, dynamic> toJson() => {
-        'min_app_version': minAppVersion,
-        'force_app_update': forceAppUpdate,
+        'min_validation_file_version_allowed': minValidationFileVersionAllowed,
+        'force_validation_file_update': forceValidationFileUpdate,
         'apply_policy': applyPolicy,
       };
 }
@@ -302,14 +304,15 @@ class SyncOutcome {
   final String? remoteVersion;
   final String? message;
 
-  bool get requiresStoreUpdate => status == SyncStatus.forceUpdateRequired;
+  bool get isLocalValidationFileBelowMinAllowed =>
+      status == SyncStatus.localValidationFileBelowMinAllowed;
 }
 
 enum SyncStatus {
   upToDate,
   updated,
   pendingNextLaunch,
-  forceUpdateRequired,
+  localValidationFileBelowMinAllowed,
   fetchFailed,
   invalidRemote,
 }

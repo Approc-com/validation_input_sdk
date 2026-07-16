@@ -12,7 +12,7 @@ import 'package:validation_sdk/validation_sdk.dart';
 /// void main() async {
 ///   WidgetsFlutterBinding.ensureInitialized();
 ///   await validation.initialize();
-///   validation.sync(appVersion: '3.0.0'); // fire-and-forget
+///   validation.sync(localValidationFileVersion: validation.config.version); // fire-and-forget
 ///   runApp(MyApp(validation: validation));
 /// }
 /// ```

@@ -6,11 +6,13 @@ import 'repository/validation_config_repository.dart';
 class ValidationSdk {
   ValidationSdk({
     required String assetPath,
+    String? defaultValidationJsonFileUrl,
     String? remoteUrl,
     String subdirectory = 'validation',
   }) : repository = ValidationConfigRepository(
           assetPath: assetPath,
-          remoteUrl: remoteUrl,
+          defaultValidationJsonFileUrl:
+              defaultValidationJsonFileUrl ?? remoteUrl,
           subdirectory: subdirectory,
         ),
         engine = ValidationEngine();
@@ -23,9 +25,15 @@ class ValidationSdk {
   /// Call on app start (non-blocking after init).
   Future<void> initialize() => repository.init();
 
-  /// Background sync — pass your app semver string e.g. "3.0.0".
-  Future<SyncOutcome> sync({required String appVersion}) =>
-      repository.sync(appVersion: appVersion);
+  /// Background sync — pass active validation.json semver and optional URL.
+  Future<SyncOutcome> sync({
+    required String localValidationFileVersion,
+    String? validationJsonFileUrl,
+  }) =>
+      repository.sync(
+        localValidationFileVersion: localValidationFileVersion,
+        validationJsonFileUrl: validationJsonFileUrl,
+      );
 
   FieldRules? rules({
     required String screen,

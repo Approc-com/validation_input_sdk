@@ -21,13 +21,13 @@ import 'package:validation_sdk/validation_sdk.dart';
 
 final validation = ValidationSdk(
   assetPath: 'assets/validation/validation.json',
-  remoteUrl: 'https://cdn.example.com/validation/validation.json',
+  defaultValidationJsonFileUrl: 'https://cdn.example.com/validation/validation.json',
 );
 
 Future<void> bootstrap() async {
   WidgetsFlutterBinding.ensureInitialized();
   await validation.initialize();
-  validation.sync(appVersion: '3.0.0'); // non-blocking
+  validation.sync(localValidationFileVersion: validation.config.version); // non-blocking
   validation.listen((config) {
     // immediate apply_policy — refresh UI if needed
   });
@@ -81,10 +81,10 @@ validation.rules(
 ## Sync outcomes
 
 ```dart
-final outcome = await validation.sync(appVersion: '3.0.0');
+final outcome = await validation.sync(localValidationFileVersion: validation.config.version);
 
-if (outcome.requiresStoreUpdate) {
-  // show force-update dialog → store
+if (outcome.isLocalValidationFileBelowMinAllowed) {
+  // local validation file too old for remote config — keep cached rules
 }
 ```
 
@@ -93,7 +93,7 @@ if (outcome.requiresStoreUpdate) {
 | `upToDate` | Remote same or older version |
 | `updated` | Applied immediately |
 | `pendingNextLaunch` | Saved to pending file |
-| `forceUpdateRequired` | Block user until app update |
+| `localValidationFileBelowMinAllowed` | `localValidationFileVersion` < `min_validation_file_version_allowed` while `force_validation_file_update` — remote not applied |
 | `fetchFailed` | Network error — keep cached config |
 
 ## Architecture

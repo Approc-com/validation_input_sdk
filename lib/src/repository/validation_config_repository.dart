@@ -12,13 +12,14 @@ typedef ConfigListener = void Function(ValidationConfig config);
 class ValidationConfigRepository {
   ValidationConfigRepository({
     required this.assetPath,
-    this.remoteUrl,
+    String? defaultValidationJsonFileUrl,
+    String? remoteUrl,
     this.httpClient,
     this.subdirectory = 'validation',
-  });
+  }) : defaultValidationJsonFileUrl = defaultValidationJsonFileUrl ?? remoteUrl;
 
   final String assetPath;
-  final String? remoteUrl;
+  final String? defaultValidationJsonFileUrl;
   final http.Client? httpClient;
   final String subdirectory;
 
@@ -51,15 +52,19 @@ class ValidationConfigRepository {
     _active = ValidationConfig.parse(bundled);
   }
 
-  Future<SyncOutcome> sync({required String appVersion}) async {
+  Future<SyncOutcome> sync({
+    required String localValidationFileVersion,
+    String? validationJsonFileUrl,
+  }) async {
     if (_active == null) await init();
-    if (remoteUrl == null || remoteUrl!.isEmpty) {
+    final url = _resolveValidationJsonFileUrl(validationJsonFileUrl);
+    if (url == null) {
       return const SyncOutcome(status: SyncStatus.upToDate);
     }
 
     try {
       final client = httpClient ?? http.Client();
-      final response = await client.get(Uri.parse(remoteUrl!));
+      final response = await client.get(Uri.parse(url));
       if (response.statusCode != 200) {
         return SyncOutcome(
           status: SyncStatus.fetchFailed,
@@ -76,12 +81,17 @@ class ValidationConfigRepository {
         return SyncOutcome(status: SyncStatus.upToDate, remoteVersion: remote.version);
       }
 
-      if (remote.sync.forceAppUpdate &&
-          Semver.isLess(appVersion, remote.sync.minAppVersion)) {
+      if (remote.sync.forceValidationFileUpdate &&
+          Semver.isLess(
+            localValidationFileVersion,
+            remote.sync.minValidationFileVersionAllowed,
+          )) {
         return SyncOutcome(
-          status: SyncStatus.forceUpdateRequired,
+          status: SyncStatus.localValidationFileBelowMinAllowed,
           remoteVersion: remote.version,
-          message: 'App $appVersion < min ${remote.sync.minAppVersion}',
+          message:
+              'Local validation $localValidationFileVersion < min allowed '
+              '${remote.sync.minValidationFileVersionAllowed}',
         );
       }
 
@@ -104,6 +114,14 @@ class ValidationConfigRepository {
     } catch (e) {
       return SyncOutcome(status: SyncStatus.fetchFailed, message: '$e');
     }
+  }
+
+  String? _resolveValidationJsonFileUrl(String? validationJsonFileUrl) {
+    final override = validationJsonFileUrl?.trim();
+    if (override != null && override.isNotEmpty) return override;
+    final fallback = defaultValidationJsonFileUrl?.trim();
+    if (fallback != null && fallback.isNotEmpty) return fallback;
+    return null;
   }
 
   Future<void> _applyPendingIfExists(Directory dir) async {

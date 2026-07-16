@@ -19,10 +19,10 @@ dependencies:
 ```dart
 final validation = ValidationSdk(
   assetPath: 'assets/validation/validation.json',
-  remoteUrl: 'https://cdn.example.com/validation/validation.json',
+  defaultValidationJsonFileUrl: 'https://cdn.example.com/validation/validation.json',
 );
 await validation.initialize();
-validation.sync(appVersion: '3.0.0');
+validation.sync(localValidationFileVersion: validation.config.version);
 ```
 
 See [validation_sdk/README.md](validation_sdk/README.md).
@@ -68,7 +68,7 @@ START
   ├─ background: fetch remote validation.json
   ├─ remote.version <= active.version → done
   └─ remote.version > active.version
-        ├─ app < sync.min_app_version + force_app_update → block, show store
+        ├─ force_validation_file_update && localValidationFileVersion < min_validation_file_version_allowed → skip apply (keep cached)
         ├─ apply_policy: "next_launch" → save validation_pending.json
         └─ apply_policy: "immediate"   → atomic write + notify app
 ```
@@ -131,12 +131,12 @@ Validators read from `repository.active` **at validate time**, not at widget bui
 
 ## Sync policies
 
-| Change | `apply_policy` | `force_app_update` |
+| Change | `apply_policy` | `force_validation_file_update` |
 |--------|----------------|-------------------|
 | Required/optional toggle | `next_launch` | `false` |
 | Message text fix | `next_launch` | `false` |
 | Urgent fix | `immediate` | `false` |
-| New rule type | — | `true` + bump `min_app_version` |
+| New rule type | — | `true` + bump `min_validation_file_version_allowed` |
 
 ---
 

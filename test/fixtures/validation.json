@@ -2,8 +2,8 @@
   "version": "2.0.0",
   "updated_at": "2026-07-08T09:00:00Z",
   "sync": {
-    "min_app_version": "3.0.0",
-    "force_app_update": false,
+    "min_validation_file_version_allowed": "3.0.0",
+    "force_validation_file_update": false,
     "apply_policy": "next_launch"
   },
   "patterns": {
