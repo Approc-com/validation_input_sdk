@@ -116,4 +116,22 @@ void main() {
       expect(result.isValid, false);
     });
   });
+
+  group('error_codes', () {
+    test('parses catalog', () {
+      expect(config.errorCodes['AUTH_001']?.en, 'Invalid identifier or password');
+      expect(config.errorCodes['AUTH_002']?.en, contains('Access token'));
+    });
+
+    test('falls back to en when locale empty', () {
+      expect(
+        config.errorCodes['AUTH_001']?.resolvedForLocale('ar'),
+        'Invalid identifier or password',
+      );
+    });
+
+    test('unknown code is null', () {
+      expect(config.errorCodes['AUTH_999']?.resolvedForLocale('en'), isNull);
+    });
+  });
 }

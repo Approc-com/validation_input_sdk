@@ -103,6 +103,10 @@ class ValidationSdk {
     return errors;
   }
 
+  /// Localized API/backend error text; `null` if code unknown or empty.
+  String? errorMessage(String code, {String locale = 'en'}) =>
+      config.errorCodes[code]?.resolvedForLocale(locale);
+
   void listen(void Function(ValidationConfig config) listener) {
     repository.onConfigUpdated = listener;
   }

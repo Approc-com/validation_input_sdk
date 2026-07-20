@@ -51,6 +51,17 @@ if (!result.isValid) {
 }
 ```
 
+## API error codes
+
+Lookup backend error codes from `error_codes` in `validation.json` (dashboard can append; sync delivers them):
+
+```dart
+final msg = validation.errorMessage(apiError.code, locale: 'ar')
+    ?? 'Something went wrong';
+```
+
+Unknown codes (or empty text) return `null`. Empty locale falls back to `en`.
+
 ## Validate a whole screen
 
 ```dart

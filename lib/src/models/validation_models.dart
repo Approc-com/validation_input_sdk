@@ -7,6 +7,7 @@ class ValidationConfig {
     required this.sync,
     required this.patterns,
     required this.messages,
+    this.errorCodes = const {},
     required this.screens,
   });
 
@@ -15,6 +16,7 @@ class ValidationConfig {
   final SyncConfig sync;
   final Map<String, PatternDef> patterns;
   final Map<String, MessageDef> messages;
+  final Map<String, MessageDef> errorCodes;
   final List<ScreenDef> screens;
 
   factory ValidationConfig.fromJson(Map<String, dynamic> json) =>
@@ -28,6 +30,11 @@ class ValidationConfig {
         messages: (json['messages'] as Map<String, dynamic>).map(
           (k, v) => MapEntry(k, MessageDef.fromJson(v as Map<String, dynamic>)),
         ),
+        errorCodes: (json['error_codes'] as Map<String, dynamic>?)?.map(
+              (k, v) =>
+                  MapEntry(k, MessageDef.fromJson(v as Map<String, dynamic>)),
+            ) ??
+            const {},
         screens: (json['screens'] as List)
             .map((e) => ScreenDef.fromJson(e as Map<String, dynamic>))
             .toList(),
@@ -43,6 +50,12 @@ class ValidationConfig {
               'ar': v.ar,
               'it': v.it,
             })),
+        if (errorCodes.isNotEmpty)
+          'error_codes': errorCodes.map((k, v) => MapEntry(k, {
+                'en': v.en,
+                'ar': v.ar,
+                'it': v.it,
+              })),
         'screens': screens.map((e) => _screenToJson(e)).toList(),
       };
 
@@ -130,10 +143,17 @@ class MessageDef {
         _ => en,
       };
 
+  /// Locale text, falling back to `en` when empty; `null` if both empty.
+  String? resolvedForLocale(String locale) {
+    final primary = forLocale(locale);
+    if (primary.isNotEmpty) return primary;
+    return en.isNotEmpty ? en : null;
+  }
+
   factory MessageDef.fromJson(Map<String, dynamic> json) => MessageDef(
-        en: json['en'] as String,
-        ar: json['ar'] as String,
-        it: json['it'] as String,
+        en: json['en'] as String? ?? '',
+        ar: json['ar'] as String? ?? '',
+        it: json['it'] as String? ?? '',
       );
 }
 

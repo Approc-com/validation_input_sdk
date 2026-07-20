@@ -30,6 +30,16 @@
       "regex": "^[0-9]{14}$"
     }
   },
+  "error_codes": {
+    "AUTH_001": {
+      "en": "Invalid identifier or password",
+      "ar": ""
+    },
+    "AUTH_002": {
+      "en": "Access token missing, malformed, or expired",
+      "ar": ""
+    }
+  },
   "messages": {
     "required": {
       "en": "This field is required",
