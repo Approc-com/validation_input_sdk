@@ -43,13 +43,29 @@ class ValidationConfigRepository {
 
     final activeFile = File('${dir.path}/validation.json');
     if (await activeFile.exists()) {
-      _active = ValidationConfig.parse(await activeFile.readAsString());
-      return;
+      final cached = await activeFile.readAsString();
+      final parsed = _tryParse(cached);
+      if (parsed != null) {
+        _active = parsed;
+        return;
+      }
     }
 
     final bundled = await rootBundle.loadString(assetPath);
+    final parsedBundled = _tryParse(bundled);
+    if (parsedBundled == null) {
+      throw StateError('Bundled validation.json is invalid: $assetPath');
+    }
     await _atomicWrite(activeFile, bundled);
-    _active = ValidationConfig.parse(bundled);
+    _active = parsedBundled;
+  }
+
+  ValidationConfig? _tryParse(String raw) {
+    try {
+      return ValidationConfig.parse(raw);
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<SyncOutcome> sync({
@@ -72,7 +88,10 @@ class ValidationConfigRepository {
         );
       }
 
-      final remote = ValidationConfig.parse(response.body);
+      final remote = _tryParse(response.body);
+      if (remote == null) {
+        return const SyncOutcome(status: SyncStatus.invalidRemote);
+      }
       if (!Semver.isValid(remote.version) || !Semver.isValid(_active!.version)) {
         return const SyncOutcome(status: SyncStatus.invalidRemote);
       }
@@ -128,8 +147,14 @@ class ValidationConfigRepository {
     final pending = File('${dir.path}/validation_pending.json');
     if (!await pending.exists()) return;
 
+    final raw = await pending.readAsString();
+    if (_tryParse(raw) == null) {
+      await pending.delete();
+      return;
+    }
+
     final active = File('${dir.path}/validation.json');
-    await _atomicWrite(active, await pending.readAsString());
+    await _atomicWrite(active, raw);
     await pending.delete();
   }
 
