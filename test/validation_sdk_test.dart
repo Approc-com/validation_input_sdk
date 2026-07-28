@@ -133,5 +133,36 @@ void main() {
     test('unknown code is null', () {
       expect(config.errorCodes['AUTH_999']?.resolvedForLocale('en'), isNull);
     });
+
+    test('parses actions catalog and ordered per-code actions', () {
+      expect(config.actions, ['clear_local_cache', 'rerun_bootstrap']);
+      expect(
+        config.errorCodes['AUTH_014']?.actions,
+        ['clear_local_cache', 'rerun_bootstrap'],
+      );
+      expect(config.errorCodes['AUTH_001']?.actions, isEmpty);
+    });
+
+    test('toJson omits empty actions', () {
+      final json = config.toJson();
+      expect(json['actions'], ['clear_local_cache', 'rerun_bootstrap']);
+      expect(
+        (json['error_codes'] as Map)['AUTH_014']['actions'],
+        ['clear_local_cache', 'rerun_bootstrap'],
+      );
+      expect(
+        (json['error_codes'] as Map)['AUTH_001'].containsKey('actions'),
+        isFalse,
+      );
+    });
+
+    test('errorActions: ordered list; unknown/empty is empty', () {
+      List<String> errorActions(String code) =>
+          config.errorCodes[code]?.actions ?? const [];
+      expect(errorActions('AUTH_014'),
+          ['clear_local_cache', 'rerun_bootstrap']);
+      expect(errorActions('AUTH_001'), isEmpty);
+      expect(errorActions('AUTH_999'), isEmpty);
+    });
   });
 }

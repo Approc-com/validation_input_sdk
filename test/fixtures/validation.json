@@ -30,6 +30,7 @@
       "regex": "^[0-9]{14}$"
     }
   },
+  "actions": ["clear_local_cache", "rerun_bootstrap"],
   "error_codes": {
     "AUTH_001": {
       "en": "Invalid identifier or password",
@@ -38,6 +39,11 @@
     "AUTH_002": {
       "en": "Access token missing, malformed, or expired",
       "ar": ""
+    },
+    "AUTH_014": {
+      "en": "Device token missing",
+      "ar": "",
+      "actions": ["clear_local_cache", "rerun_bootstrap"]
     }
   },
   "messages": {

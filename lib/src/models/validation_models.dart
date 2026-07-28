@@ -7,6 +7,7 @@ class ValidationConfig {
     required this.sync,
     required this.patterns,
     required this.messages,
+    this.actions = const [],
     this.errorCodes = const {},
     required this.screens,
   });
@@ -16,7 +17,8 @@ class ValidationConfig {
   final SyncConfig sync;
   final Map<String, PatternDef> patterns;
   final Map<String, MessageDef> messages;
-  final Map<String, MessageDef> errorCodes;
+  final List<String> actions;
+  final Map<String, ErrorCodeDef> errorCodes;
   final List<ScreenDef> screens;
 
   factory ValidationConfig.fromJson(Map<String, dynamic> json) =>
@@ -30,9 +32,12 @@ class ValidationConfig {
         messages: (json['messages'] as Map<String, dynamic>).map(
           (k, v) => MapEntry(k, MessageDef.fromJson(v as Map<String, dynamic>)),
         ),
+        actions: (json['actions'] as List?)?.cast<String>() ?? const [],
         errorCodes: (json['error_codes'] as Map<String, dynamic>?)?.map(
-              (k, v) =>
-                  MapEntry(k, MessageDef.fromJson(v as Map<String, dynamic>)),
+              (k, v) => MapEntry(
+                k,
+                ErrorCodeDef.fromJson(v as Map<String, dynamic>),
+              ),
             ) ??
             const {},
         screens: (json['screens'] as List)
@@ -50,12 +55,10 @@ class ValidationConfig {
               'ar': v.ar,
               'it': v.it,
             })),
+        if (actions.isNotEmpty) 'actions': actions,
         if (errorCodes.isNotEmpty)
-          'error_codes': errorCodes.map((k, v) => MapEntry(k, {
-                'en': v.en,
-                'ar': v.ar,
-                'it': v.it,
-              })),
+          'error_codes':
+              errorCodes.map((k, v) => MapEntry(k, v.toJson())),
         'screens': screens.map((e) => _screenToJson(e)).toList(),
       };
 
@@ -155,6 +158,47 @@ class MessageDef {
         ar: json['ar'] as String? ?? '',
         it: json['it'] as String? ?? '',
       );
+}
+
+class ErrorCodeDef {
+  const ErrorCodeDef({
+    required this.en,
+    required this.ar,
+    required this.it,
+    this.actions = const [],
+  });
+
+  final String en;
+  final String ar;
+  final String it;
+  final List<String> actions;
+
+  String forLocale(String locale) => switch (locale) {
+        'ar' => ar,
+        'it' => it,
+        _ => en,
+      };
+
+  /// Locale text, falling back to `en` when empty; `null` if both empty.
+  String? resolvedForLocale(String locale) {
+    final primary = forLocale(locale);
+    if (primary.isNotEmpty) return primary;
+    return en.isNotEmpty ? en : null;
+  }
+
+  factory ErrorCodeDef.fromJson(Map<String, dynamic> json) => ErrorCodeDef(
+        en: json['en'] as String? ?? '',
+        ar: json['ar'] as String? ?? '',
+        it: json['it'] as String? ?? '',
+        actions: (json['actions'] as List?)?.cast<String>() ?? const [],
+      );
+
+  Map<String, dynamic> toJson() => {
+        'en': en,
+        'ar': ar,
+        'it': it,
+        if (actions.isNotEmpty) 'actions': actions,
+      };
 }
 
 class ScreenDef {

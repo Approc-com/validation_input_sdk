@@ -107,6 +107,10 @@ class ValidationSdk {
   String? errorMessage(String code, {String locale = 'en'}) =>
       config.errorCodes[code]?.resolvedForLocale(locale);
 
+  /// Ordered client action IDs for an API error code; empty if none/unknown.
+  List<String> errorActions(String code) =>
+      config.errorCodes[code]?.actions ?? const [];
+
   void listen(void Function(ValidationConfig config) listener) {
     repository.onConfigUpdated = listener;
   }

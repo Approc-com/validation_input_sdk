@@ -58,9 +58,14 @@ Lookup backend error codes from `error_codes` in `validation.json` (dashboard ca
 ```dart
 final msg = validation.errorMessage(apiError.code, locale: 'ar')
     ?? 'Something went wrong';
+
+for (final action in validation.errorActions(apiError.code)) {
+  // Host maps IDs → real behavior (clear cache, re-bootstrap, …)
+}
 ```
 
-Unknown codes (or empty text) return `null`. Empty locale falls back to `en`.
+Unknown codes (or empty text) return `null`. Empty locale falls back to `en`.  
+`errorActions` returns an ordered list (empty if none/unknown).
 
 ## Validate a whole screen
 
