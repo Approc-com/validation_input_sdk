@@ -1,12 +1,31 @@
 import '../models/validation_models.dart';
+import '../utils/date_bounds.dart';
 import 'rule_resolver.dart';
 
 typedef MessageResolver = String Function(String messageKey, {int? min});
 
 class ValidationEngine {
-  ValidationEngine({RuleResolver? resolver}) : _resolver = resolver ?? RuleResolver();
+  ValidationEngine({RuleResolver? resolver})
+      : _resolver = resolver ?? RuleResolver();
 
   final RuleResolver _resolver;
+
+  /// Fallback message keys when field `error_messages` omit a rule.
+  static const _ruleDefaultMessageKeys = <String, String>{
+    'required': 'required',
+    'min_length': 'minLength',
+    'max_length': 'maxLength',
+    'regex': 'regex',
+    'date_past': 'birth_date_invalid',
+    'date_future': 'expire_date_invalid',
+    'min_date': 'expire_date_invalid',
+    'max_date': 'expire_date_too_far',
+    'mixed_case': 'password_mixed_case',
+    'numbers': 'password_needs_number',
+    'symbols': 'password_needs_symbol',
+    'confirmed': 'password_mismatch',
+    'letters': 'name_letters_only',
+  };
 
   FieldRules? rules({
     required ValidationConfig config,
@@ -61,13 +80,14 @@ class ValidationEngine {
     final v = rules.validation;
     final text = _asString(value);
 
-    String fail(String ruleKey) {
-      final msgKey = v.errorMessages[ruleKey];
-      final message = msgKey != null
-          ? _resolveMessage(config, msgKey, locale, min: v.minLength)
-          : null;
-      return message ?? 'Invalid';
-    }
+    String fail(String ruleKey) => _messageForRule(
+          config: config,
+          errorMessages: v.errorMessages,
+          ruleKey: ruleKey,
+          locale: locale,
+          min: v.minLength,
+          max: v.maxLength,
+        );
 
     if (v.required == true && text.trim().isEmpty) {
       return ValidationResult(errorKey: 'required', message: fail('required'));
@@ -75,10 +95,16 @@ class ValidationEngine {
     if (text.isEmpty) return const ValidationResult();
 
     if (v.minLength != null && text.length < v.minLength!) {
-      return ValidationResult(errorKey: 'min_length', message: fail('min_length'));
+      return ValidationResult(
+        errorKey: 'min_length',
+        message: fail('min_length'),
+      );
     }
     if (v.maxLength != null && text.length > v.maxLength!) {
-      return ValidationResult(errorKey: 'max_length', message: fail('max_length'));
+      return ValidationResult(
+        errorKey: 'max_length',
+        message: fail('max_length'),
+      );
     }
 
     if (rules.patternDef != null) {
@@ -102,24 +128,83 @@ class ValidationEngine {
       }
     }
 
-    if (rules.fieldType == 'date' && v.dateConstraint != null) {
+    if (rules.fieldType == 'date' &&
+        (v.dateConstraint != null || v.minDate != null || v.maxDate != null)) {
       final date = DateTime.tryParse(text);
       if (date == null) {
+        final parseKey = v.dateConstraint == 'past'
+            ? 'date_past'
+            : (v.dateConstraint == 'future' ? 'date_future' : 'max_date');
         return ValidationResult(
-          errorKey: v.dateConstraint,
-          message: fail(v.dateConstraint == 'past' ? 'date_past' : 'date_future'),
+          errorKey: v.dateConstraint ?? 'max_date',
+          message: fail(parseKey),
         );
       }
       final now = DateTime.now();
       if (v.dateConstraint == 'past' && !date.isBefore(now)) {
-        return ValidationResult(errorKey: 'date_past', message: fail('date_past'));
+        return ValidationResult(
+          errorKey: 'date_past',
+          message: fail('date_past'),
+        );
       }
       if (v.dateConstraint == 'future' && !date.isAfter(now)) {
-        return ValidationResult(errorKey: 'date_future', message: fail('date_future'));
+        return ValidationResult(
+          errorKey: 'date_future',
+          message: fail('date_future'),
+        );
+      }
+      if (!isDateOnOrAfterMin(date, v.minDate)) {
+        return ValidationResult(
+          errorKey: 'min_date',
+          message: fail('min_date'),
+        );
+      }
+      if (!isDateOnOrBeforeMax(date, v.maxDate)) {
+        return ValidationResult(
+          errorKey: 'max_date',
+          message: fail('max_date'),
+        );
       }
     }
 
     return const ValidationResult();
+  }
+
+  /// Resolves a user-facing message for [ruleKey] without throwing:
+  /// 1) field `error_messages[rule]` → catalog
+  /// 2) catalog key == rule / camelCase alias / default map
+  /// 3) catalog `invalid`
+  /// 4) locale default string
+  String _messageForRule({
+    required ValidationConfig config,
+    required Map<String, String> errorMessages,
+    required String ruleKey,
+    required String locale,
+    int? min,
+    int? max,
+  }) {
+    final candidates = <String>[
+      if ((errorMessages[ruleKey] ?? '').trim().isNotEmpty)
+        errorMessages[ruleKey]!.trim(),
+      ruleKey,
+      _snakeToCamel(ruleKey),
+      if (_ruleDefaultMessageKeys[ruleKey] != null)
+        _ruleDefaultMessageKeys[ruleKey]!,
+      'invalid',
+    ];
+
+    for (final key in candidates) {
+      final resolved = _resolveMessage(
+        config,
+        key,
+        locale,
+        min: min,
+        max: max,
+      );
+      if (resolved != null) return resolved;
+    }
+
+    return _localeFallback(locale);
   }
 
   bool _passesExtra(String rule, String text) => switch (rule) {
@@ -135,26 +220,55 @@ class ValidationEngine {
     Map<String, dynamic> allValues,
   ) =>
       switch (rule) {
-        'mixed_case' => RegExp(r'[a-z]').hasMatch(text) && RegExp(r'[A-Z]').hasMatch(text),
+        'mixed_case' =>
+          RegExp(r'[a-z]').hasMatch(text) && RegExp(r'[A-Z]').hasMatch(text),
         'numbers' => RegExp(r'\d').hasMatch(text),
         'symbols' => RegExp(r'[^a-zA-Z0-9]').hasMatch(text),
         'confirmed' =>
-          confirmedField != null && text == _asString(allValues[confirmedField]),
+          confirmedField != null &&
+              text == _asString(allValues[confirmedField]),
+        'letters' => RegExp(r'^[\u0600-\u06FFa-zA-Z\s]+$').hasMatch(text),
         _ => true,
       };
 
   String _asString(dynamic value) => value?.toString() ?? '';
 
-  String _resolveMessage(
+  /// Returns null when [key] is missing from the catalog (so callers can fall back).
+  String? _resolveMessage(
     ValidationConfig config,
     String key,
     String locale, {
     int? min,
+    int? max,
   }) {
     final def = config.messages[key];
-    if (def == null) return key;
-    var msg = def.forLocale(locale);
+    if (def == null) return null;
+    var msg = def.forLocale(locale).trim();
+    if (msg.isEmpty) return null;
     if (min != null) msg = msg.replaceAll('{{min}}', '$min');
+    if (max != null) msg = msg.replaceAll('{{max}}', '$max');
     return msg;
+  }
+
+  static String _snakeToCamel(String key) {
+    final parts = key.split('_');
+    if (parts.length < 2) return key;
+    final buffer = StringBuffer(parts.first);
+    for (var i = 1; i < parts.length; i++) {
+      final p = parts[i];
+      if (p.isEmpty) continue;
+      buffer.write(p[0].toUpperCase());
+      if (p.length > 1) buffer.write(p.substring(1));
+    }
+    return buffer.toString();
+  }
+
+  static String _localeFallback(String locale) {
+    final lang = locale.split(RegExp(r'[-_]')).first.toLowerCase();
+    return switch (lang) {
+      'ar' => 'غير صحيح',
+      'it' => 'Non valido',
+      _ => 'Invalid',
+    };
   }
 }

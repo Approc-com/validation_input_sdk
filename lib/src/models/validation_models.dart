@@ -23,27 +23,61 @@ class ValidationConfig {
 
   factory ValidationConfig.fromJson(Map<String, dynamic> json) =>
       ValidationConfig(
-        version: json['version'] as String,
-        updatedAt: json['updated_at'] as String,
-        sync: SyncConfig.fromJson(json['sync'] as Map<String, dynamic>),
-        patterns: (json['patterns'] as Map<String, dynamic>).map(
-          (k, v) => MapEntry(k, PatternDef.fromJson(v as Map<String, dynamic>)),
+        version: json['version']?.toString() ?? '0.0.0',
+        updatedAt: json['updated_at']?.toString() ?? '',
+        sync: SyncConfig.fromJson(
+          json['sync'] is Map
+              ? Map<String, dynamic>.from(json['sync'] as Map)
+              : const <String, dynamic>{},
         ),
-        messages: (json['messages'] as Map<String, dynamic>).map(
-          (k, v) => MapEntry(k, MessageDef.fromJson(v as Map<String, dynamic>)),
-        ),
-        actions: (json['actions'] as List?)?.cast<String>() ?? const [],
-        errorCodes: (json['error_codes'] as Map<String, dynamic>?)?.map(
-              (k, v) => MapEntry(
-                k,
-                ErrorCodeDef.fromJson(v as Map<String, dynamic>),
-              ),
-            ) ??
-            const {},
-        screens: (json['screens'] as List)
-            .map((e) => ScreenDef.fromJson(e as Map<String, dynamic>))
+        patterns: _parsePatterns(json['patterns']),
+        messages: _parseMessages(json['messages']),
+        actions: (json['actions'] as List?)
+                ?.map((e) => e.toString())
+                .toList() ??
+            const [],
+        errorCodes: _parseErrorCodes(json['error_codes']),
+        screens: (json['screens'] as List? ?? const [])
+            .whereType<Map>()
+            .map((e) => ScreenDef.fromJson(Map<String, dynamic>.from(e)))
             .toList(),
       );
+
+  static Map<String, PatternDef> _parsePatterns(Object? raw) {
+    if (raw is! Map) return const {};
+    final out = <String, PatternDef>{};
+    for (final entry in raw.entries) {
+      final value = entry.value;
+      if (value is! Map) continue;
+      out[entry.key.toString()] =
+          PatternDef.fromJson(Map<String, dynamic>.from(value));
+    }
+    return out;
+  }
+
+  static Map<String, MessageDef> _parseMessages(Object? raw) {
+    if (raw is! Map) return const {};
+    final out = <String, MessageDef>{};
+    for (final entry in raw.entries) {
+      final value = entry.value;
+      if (value is! Map) continue;
+      out[entry.key.toString()] =
+          MessageDef.fromJson(Map<String, dynamic>.from(value));
+    }
+    return out;
+  }
+
+  static Map<String, ErrorCodeDef> _parseErrorCodes(Object? raw) {
+    if (raw is! Map) return const {};
+    final out = <String, ErrorCodeDef>{};
+    for (final entry in raw.entries) {
+      final value = entry.value;
+      if (value is! Map) continue;
+      out[entry.key.toString()] =
+          ErrorCodeDef.fromJson(Map<String, dynamic>.from(value));
+    }
+    return out;
+  }
 
   Map<String, dynamic> toJson() => {
         'version': version,
@@ -81,6 +115,9 @@ class ValidationConfig {
         if (v.customRules.isNotEmpty) 'custom_rules': v.customRules,
         if (v.confirmedField != null) 'confirmed_field': v.confirmedField,
         if (v.dateConstraint != null) 'date_constraint': v.dateConstraint,
+        if (v.minDate != null) 'min_date': v.minDate,
+        if (v.maxDate != null) 'max_date': v.maxDate,
+        if (v.canEdit != null) 'can_edit': v.canEdit,
         if (v.errorMessages.isNotEmpty) 'error_messages': v.errorMessages,
         if (v.tenantOverrides.isNotEmpty) 'tenant_overrides': v.tenantOverrides,
       };
@@ -102,10 +139,9 @@ class SyncConfig {
 
   factory SyncConfig.fromJson(Map<String, dynamic> json) => SyncConfig(
         minValidationFileVersionAllowed:
-            json['min_validation_file_version_allowed'] as String,
-        forceValidationFileUpdate:
-            json['force_validation_file_update'] as bool,
-        applyPolicy: json['apply_policy'] as String,
+            json['min_validation_file_version_allowed']?.toString() ?? '0.0.0',
+        forceValidationFileUpdate: json['force_validation_file_update'] == true,
+        applyPolicy: json['apply_policy']?.toString() ?? 'immediate',
       );
 
   Map<String, dynamic> toJson() => {
@@ -134,37 +170,38 @@ class PatternDef {
 }
 
 class MessageDef {
-  const MessageDef({required this.en, required this.ar, required this.it});
+  const MessageDef({this.en = '', this.ar = '', this.it = ''});
 
   final String en;
   final String ar;
   final String it;
 
-  String forLocale(String locale) => switch (locale) {
-        'ar' => ar,
-        'it' => it,
-        _ => en,
-      };
-
-  /// Locale text, falling back to `en` when empty; `null` if both empty.
-  String? resolvedForLocale(String locale) {
-    final primary = forLocale(locale);
-    if (primary.isNotEmpty) return primary;
-    return en.isNotEmpty ? en : null;
+  /// Prefers [locale], then falls back to non-empty `en` / `ar` / `it`.
+  String forLocale(String locale) {
+    final lang = locale.split(RegExp(r'[-_]')).first.toLowerCase();
+    final primary = switch (lang) {
+      'ar' => ar,
+      'it' => it,
+      _ => en,
+    };
+    if (primary.trim().isNotEmpty) return primary;
+    if (en.trim().isNotEmpty) return en;
+    if (ar.trim().isNotEmpty) return ar;
+    return it;
   }
 
   factory MessageDef.fromJson(Map<String, dynamic> json) => MessageDef(
-        en: json['en'] as String? ?? '',
-        ar: json['ar'] as String? ?? '',
-        it: json['it'] as String? ?? '',
+        en: _asTrimmedString(json['en']),
+        ar: _asTrimmedString(json['ar']),
+        it: _asTrimmedString(json['it']),
       );
 }
 
 class ErrorCodeDef {
   const ErrorCodeDef({
-    required this.en,
-    required this.ar,
-    required this.it,
+    this.en = '',
+    this.ar = '',
+    this.it = '',
     this.actions = const [],
   });
 
@@ -173,24 +210,34 @@ class ErrorCodeDef {
   final String it;
   final List<String> actions;
 
-  String forLocale(String locale) => switch (locale) {
-        'ar' => ar,
-        'it' => it,
-        _ => en,
-      };
+  String forLocale(String locale) {
+    final lang = locale.split(RegExp(r'[-_]')).first.toLowerCase();
+    final primary = switch (lang) {
+      'ar' => ar,
+      'it' => it,
+      _ => en,
+    };
+    if (primary.trim().isNotEmpty) return primary;
+    if (en.trim().isNotEmpty) return en;
+    if (ar.trim().isNotEmpty) return ar;
+    return it;
+  }
 
   /// Locale text, falling back to `en` when empty; `null` if both empty.
   String? resolvedForLocale(String locale) {
-    final primary = forLocale(locale);
+    final primary = forLocale(locale).trim();
     if (primary.isNotEmpty) return primary;
-    return en.isNotEmpty ? en : null;
+    return en.trim().isNotEmpty ? en.trim() : null;
   }
 
   factory ErrorCodeDef.fromJson(Map<String, dynamic> json) => ErrorCodeDef(
-        en: json['en'] as String? ?? '',
-        ar: json['ar'] as String? ?? '',
-        it: json['it'] as String? ?? '',
-        actions: (json['actions'] as List?)?.cast<String>() ?? const [],
+        en: _asTrimmedString(json['en']),
+        ar: _asTrimmedString(json['ar']),
+        it: _asTrimmedString(json['it']),
+        actions: (json['actions'] as List?)
+                ?.map((e) => e.toString())
+                .toList() ??
+            const [],
       );
 
   Map<String, dynamic> toJson() => {
@@ -199,6 +246,38 @@ class ErrorCodeDef {
         'it': it,
         if (actions.isNotEmpty) 'actions': actions,
       };
+}
+
+String _asTrimmedString(Object? value) {
+  if (value == null) return '';
+  return value.toString().trim();
+}
+
+String? _asTrimmedNullable(Object? value) {
+  final s = _asTrimmedString(value);
+  return s.isEmpty ? null : s;
+}
+
+bool? _asBool(Object? value) {
+  if (value is bool) return value;
+  if (value is num) return value != 0;
+  if (value is String) {
+    final s = value.trim().toLowerCase();
+    if (s == 'true' || s == '1') return true;
+    if (s == 'false' || s == '0') return false;
+  }
+  return null;
+}
+
+Map<String, String> _stringKeyedMap(Object? raw) {
+  if (raw is! Map) return const {};
+  final out = <String, String>{};
+  for (final entry in raw.entries) {
+    final value = _asTrimmedString(entry.value);
+    if (value.isEmpty) continue;
+    out[entry.key.toString()] = value;
+  }
+  return out;
 }
 
 class ScreenDef {
@@ -236,10 +315,12 @@ class FieldDef {
   final FieldValidation validation;
 
   factory FieldDef.fromJson(Map<String, dynamic> json) => FieldDef(
-        id: json['id'] as String,
-        type: json['type'] as String,
+        id: json['id']?.toString() ?? '',
+        type: json['type']?.toString() ?? 'text',
         validation: FieldValidation.fromJson(
-          json['validation'] as Map<String, dynamic>,
+          json['validation'] is Map
+              ? Map<String, dynamic>.from(json['validation'] as Map)
+              : const <String, dynamic>{},
         ),
       );
 }
@@ -253,6 +334,9 @@ class FieldValidation {
     this.customRules = const [],
     this.confirmedField,
     this.dateConstraint,
+    this.minDate,
+    this.maxDate,
+    this.canEdit,
     this.errorMessages = const {},
     this.tenantOverrides = const {},
   });
@@ -264,39 +348,49 @@ class FieldValidation {
   final List<String> customRules;
   final String? confirmedField;
   final String? dateConstraint;
+  /// Absolute lower bound as `YYYY-MM-DD`.
+  final String? minDate;
+  /// Absolute upper bound as `YYYY-MM-DD`.
+  final String? maxDate;
+  /// When `false`, UI should lock the field (read-only).
+  final bool? canEdit;
   final Map<String, String> errorMessages;
   final Map<String, Map<String, dynamic>> tenantOverrides;
 
   factory FieldValidation.fromJson(Map<String, dynamic> json) => FieldValidation(
         required: json['required'] as bool?,
         pattern: json['pattern'] as String?,
-        minLength: json['min_length'] as int?,
-        maxLength: json['max_length'] as int?,
-        customRules: (json['custom_rules'] as List?)?.cast<String>() ?? [],
+        minLength: _asInt(json['min_length']),
+        maxLength: _asInt(json['max_length']),
+        customRules: (json['custom_rules'] as List?)
+                ?.map((e) => e.toString())
+                .toList() ??
+            const [],
         confirmedField: json['confirmed_field'] as String?,
         dateConstraint: json['date_constraint'] as String?,
-        errorMessages: (json['error_messages'] as Map<String, dynamic>?)
-                ?.map((k, v) => MapEntry(k, v as String)) ??
-            {},
+        minDate: _asTrimmedNullable(json['min_date']),
+        maxDate: _asTrimmedNullable(json['max_date']),
+        canEdit: _asBool(json['can_edit']),
+        errorMessages: _stringKeyedMap(json['error_messages']),
         tenantOverrides:
-            (json['tenant_overrides'] as Map<String, dynamic>?)?.map(
-                  (k, v) => MapEntry(k, Map<String, dynamic>.from(v as Map)),
+            (json['tenant_overrides'] as Map?)?.map(
+                  (k, v) => MapEntry(
+                    k.toString(),
+                    v is Map ? Map<String, dynamic>.from(v) : <String, dynamic>{},
+                  ),
                 ) ??
-                {},
+                const {},
       );
 
-  factory FieldValidation.fromMap(Map<String, dynamic> json) => FieldValidation(
-        required: json['required'] as bool?,
-        pattern: json['pattern'] as String?,
-        minLength: json['min_length'] as int?,
-        maxLength: json['max_length'] as int?,
-        customRules: (json['custom_rules'] as List?)?.cast<String>() ?? [],
-        confirmedField: json['confirmed_field'] as String?,
-        dateConstraint: json['date_constraint'] as String?,
-        errorMessages: (json['error_messages'] as Map<String, dynamic>?)
-                ?.map((k, v) => MapEntry(k, v as String)) ??
-            {},
-      );
+  factory FieldValidation.fromMap(Map<String, dynamic> json) =>
+      FieldValidation.fromJson(json);
+
+  static int? _asInt(Object? value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value.trim());
+    return null;
+  }
 
   FieldValidation merge(Map<String, dynamic> overrides) {
     final merged = <String, dynamic>{
@@ -307,6 +401,9 @@ class FieldValidation {
       if (customRules.isNotEmpty) 'custom_rules': customRules,
       if (confirmedField != null) 'confirmed_field': confirmedField,
       if (dateConstraint != null) 'date_constraint': dateConstraint,
+      if (minDate != null) 'min_date': minDate,
+      if (maxDate != null) 'max_date': maxDate,
+      if (canEdit != null) 'can_edit': canEdit,
       if (errorMessages.isNotEmpty) 'error_messages': errorMessages,
       ...overrides,
     };
@@ -332,6 +429,8 @@ enum ValidationRuleKey {
   confirmed,
   datePast,
   dateFuture,
+  minDate,
+  maxDate,
 }
 
 class FieldRules {
